@@ -3,11 +3,8 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"temotes/temotes"
-	"time"
 )
 
 type SevenTvFetcher struct{}
@@ -21,31 +18,9 @@ type sevenTvEmote struct {
 type sevenTvEmoteUrl = [2]string
 
 func (t SevenTvFetcher) fetchEmotes(url string) []temotes.Emote {
-	client := http.Client{
-		Timeout: time.Second * 2,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
+	response := temotes.FetchData(url)
 	var sevenTvEmotes []sevenTvEmote
-	jsonErr := json.Unmarshal(body, &sevenTvEmotes)
+	jsonErr := json.Unmarshal(response, &sevenTvEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}

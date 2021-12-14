@@ -3,12 +3,9 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"sort"
 	"temotes/temotes"
-	"time"
 )
 
 type FfzFetcher struct{}
@@ -28,31 +25,9 @@ type ffzResponse struct {
 }
 
 func (t FfzFetcher) fetchEmotes(url string) []temotes.Emote {
-	client := http.Client{
-		Timeout: time.Second * 2,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
+	response := temotes.FetchData(url)
 	var ffzEmotesResponse ffzResponse
-	jsonErr := json.Unmarshal(body, &ffzEmotesResponse)
+	jsonErr := json.Unmarshal(response, &ffzEmotesResponse)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}

@@ -3,11 +3,8 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"temotes/temotes"
-	"time"
 )
 
 type BttvFetcher struct{}
@@ -17,35 +14,8 @@ type bttvEmote struct {
 	Code string `json:"code"`
 }
 
-func (t BttvFetcher) fetchEmotes(url string) []byte {
-	client := http.Client{
-		Timeout: time.Second * 2,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
-	return body
-}
-
 func (t BttvFetcher) FetchGlobalEmotes() []temotes.Emote {
-	response := t.fetchEmotes("https://api.betterttv.net/3/cached/emotes/global")
+	response := temotes.FetchData("https://api.betterttv.net/3/cached/emotes/global")
 
 	var bttvEmotes []bttvEmote
 	jsonErr := json.Unmarshal(response, &bttvEmotes)
@@ -67,7 +37,7 @@ type bttvChannelEmotesResponse struct {
 }
 
 func (t BttvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	response := t.fetchEmotes(fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%d", id))
+	response := temotes.FetchData(fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%d", id))
 
 	var bttvEmotesResponse bttvChannelEmotesResponse
 	jsonErr := json.Unmarshal(response, &bttvEmotesResponse)

@@ -3,12 +3,10 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"temotes/temotes"
-	"time"
 )
 
 type TwitchFetcher struct{}
@@ -25,10 +23,6 @@ type twitchEmoteResponse struct {
 }
 
 func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
-	client := http.Client{
-		Timeout: time.Second * 2,
-	}
-
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -37,22 +31,9 @@ func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
 	req.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("TWITCH_ACCESS_TOKEN")))
 
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
+	response := temotes.FetchDataRequest(req)
 	var twitchEmotes twitchEmoteResponse
-	jsonErr := json.Unmarshal(body, &twitchEmotes)
+	jsonErr := json.Unmarshal(response, &twitchEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}

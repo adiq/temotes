@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"temotes/temotes/services"
 	"time"
 )
 
@@ -45,4 +47,14 @@ func Contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func GetTwitchUserId(input string) TwitchUserId {
+	id, err := strconv.ParseInt(input, 10, 64)
+
+	if id == 0 || err != nil {
+		return services.TwitchFetcher{}.FetchUserId(input)
+	}
+
+	return TwitchUserId(id)
 }

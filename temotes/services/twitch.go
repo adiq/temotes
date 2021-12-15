@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"temotes/temotes"
 )
 
@@ -22,7 +23,7 @@ type twitchEmoteResponse struct {
 	Data []twitchEmote `json:"data"`
 }
 
-func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
+func getAuthorizedRequest(url string) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -31,7 +32,12 @@ func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
 	req.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("TWITCH_ACCESS_TOKEN")))
 
-	response := temotes.FetchDataRequest(req)
+	return req
+}
+
+func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
+	request := getAuthorizedRequest(url)
+	response := temotes.FetchDataRequest(request)
 	var twitchEmotes twitchEmoteResponse
 	jsonErr := json.Unmarshal(response, &twitchEmotes)
 	if jsonErr != nil {
@@ -99,4 +105,33 @@ func (t TwitchFetcher) parseEmote(emote twitchEmote) temotes.Emote {
 		Code:     emote.Code,
 		Urls:     t.parseEmoteUrls(emote),
 	}
+}
+
+type twitchUsersResponse struct {
+	Data []twitchUser `json:"data"`
+}
+
+type twitchUser struct {
+	ID string `json:"id"`
+}
+
+func (t TwitchFetcher) FetchUserId(username string) temotes.TwitchUserId {
+	request := getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username))
+	response := temotes.FetchDataRequest(request)
+	var twitchUsers twitchUsersResponse
+	jsonErr := json.Unmarshal(response, &twitchUsers)
+	if jsonErr != nil {
+		log.Fatal(jsonErr)
+	}
+
+	if len(twitchUsers.Data) == 0 {
+		panic("Twitch User Error: No users found")
+	}
+
+	userId, err := strconv.ParseInt(twitchUsers.Data[0].ID, 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return temotes.TwitchUserId(userId)
 }

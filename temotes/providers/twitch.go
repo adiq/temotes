@@ -2,6 +2,7 @@ package providers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,7 +116,7 @@ type twitchUser struct {
 	ID string `json:"id"`
 }
 
-func (t TwitchFetcher) FetchUserId(username string) temotes.TwitchUserId {
+func (t TwitchFetcher) FetchUserId(username string) (temotes.TwitchUserId, error) {
 	request := getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username))
 	response := temotes.FetchDataRequest(request)
 	var twitchUsers twitchUsersResponse
@@ -125,13 +126,13 @@ func (t TwitchFetcher) FetchUserId(username string) temotes.TwitchUserId {
 	}
 
 	if len(twitchUsers.Data) == 0 {
-		panic("Twitch User Error: No users found")
+		return 0, errors.New("user not found")
 	}
 
 	userId, err := strconv.ParseInt(twitchUsers.Data[0].ID, 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		return 0, errors.New("user not found")
 	}
 
-	return temotes.TwitchUserId(userId)
+	return temotes.TwitchUserId(userId), nil
 }

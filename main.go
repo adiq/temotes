@@ -7,5 +7,5 @@ import (
 
 func main() {
 	app := api.SetupServer()
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen("0.0.0.0:80"))
 }

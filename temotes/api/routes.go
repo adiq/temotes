@@ -15,7 +15,7 @@ func setupRoutes(app *fiber.App) {
 
 	// Channel specific
 	v1Channel.Get("/emotes/:services", endpoints.GetChannelEmotes)
-	v1Channel.Get("/emotes/:services/proxy/:emote/:size", endpoints.GetChannelEmoteProxy)
+	v1Channel.Get("/emotes/:services/proxy", endpoints.GetChannelEmoteProxy)
 
 	v1Channel.Get("/id", endpoints.GetChannelIdentifiers)
 

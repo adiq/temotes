@@ -10,10 +10,13 @@ func setupRoutes(app *fiber.App) {
 	v1Global := v1.Group("/global")
 	v1Channel := v1.Group("/channel/:channel")
 
-	// Global Emotes
+	// Global
 	v1Global.Get("/emotes/:services", endpoints.GetGlobalEmotes)
 
-	// Channel Emotes
-	v1Channel.Get("/id", endpoints.GetChannelId)
+	// Channel specific
+	v1Channel.Get("/emotes/:services", endpoints.GetChannelEmotes)
+	v1Channel.Get("/emotes/:services/proxy/:emote/:size", endpoints.GetChannelEmoteProxy)
+
+	v1Channel.Get("/id", endpoints.GetChannelIdentifiers)
 
 }

@@ -2,13 +2,11 @@ package endpoints
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"strings"
 	"temotes/temotes/providers"
 )
 
-func GetChannelId(c *fiber.Ctx) error {
-	channel := strings.ToLower(c.Params("channel"))
-	twitchUser, err := providers.TwitchFetcher{}.FetchUserIdentifiers(channel)
+func GetChannelIdentifiers(c *fiber.Ctx) error {
+	twitchUser, err := providers.TwitchFetcher{}.FetchUserIdentifiers(c.Params("channel"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "User not found")
 	}

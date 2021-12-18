@@ -19,12 +19,12 @@ const (
 )
 
 type EmoteUrl struct {
-	Size EmoteSize
-	Url  string
+	Size EmoteSize `json:"size"`
+	Url  string    `json:"url"`
 }
 
 type Emote struct {
-	Provider EmoteProvider
-	Code     string
-	Urls     []EmoteUrl
+	Provider EmoteProvider `json:"provider"`
+	Code     string        `json:"code"`
+	Urls     []EmoteUrl    `json:"urls"`
 }

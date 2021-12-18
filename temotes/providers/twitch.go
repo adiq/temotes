@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"temotes/temotes"
 	"time"
 )
@@ -114,12 +115,31 @@ type twitchUsersResponse struct {
 }
 
 type twitchUser struct {
-	ID string `json:"id"`
+	ID          string `json:"id"`
+	Login       string `json:"login"`
+	DisplayName string `json:"display_name"`
 }
 
-func (t TwitchFetcher) FetchUserId(username string) (temotes.TwitchUserId, error) {
-	request := getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username))
-	response := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, fmt.Sprintf("twitch-user-id-%s", username))
+type TwitchUser struct {
+	ID          temotes.TwitchUserId
+	Login       string
+	DisplayName string
+}
+
+func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, error) {
+	id, err := strconv.ParseInt(strings.ToLower(identifier), 10, 64)
+	var request *http.Request
+	var cacheKey string
+
+	if id == 0 || err != nil {
+		request = getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", identifier))
+		cacheKey = fmt.Sprintf("twitch-user-identifiers-login-%s", identifier)
+	} else {
+		request = getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?id=%d", id))
+		cacheKey = fmt.Sprintf("twitch-user-identifiers-id-%d", id)
+	}
+
+	response := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, cacheKey)
 	var twitchUsers twitchUsersResponse
 	jsonErr := json.Unmarshal(response, &twitchUsers)
 	if jsonErr != nil {
@@ -127,13 +147,19 @@ func (t TwitchFetcher) FetchUserId(username string) (temotes.TwitchUserId, error
 	}
 
 	if len(twitchUsers.Data) == 0 {
-		return 0, errors.New("user not found")
+		return nil, errors.New("user not found")
 	}
 
 	userId, err := strconv.ParseInt(twitchUsers.Data[0].ID, 10, 64)
 	if err != nil {
-		return 0, errors.New("user not found")
+		return nil, errors.New("user not found")
 	}
 
-	return temotes.TwitchUserId(userId), nil
+	user := &TwitchUser{
+		ID:          temotes.TwitchUserId(userId),
+		Login:       twitchUsers.Data[0].Login,
+		DisplayName: twitchUsers.Data[0].DisplayName,
+	}
+
+	return user, nil
 }

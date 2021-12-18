@@ -7,6 +7,13 @@ import (
 
 func setupRoutes(app *fiber.App) {
 	v1 := app.Group("/v1")
+	v1Global := v1.Group("/global")
+	v1Channel := v1.Group("/channel/:channel")
 
-	v1.Get("/channel/:channel/id", endpoints.GetChannelId)
+	// Global Emotes
+	v1Global.Get("/emotes/:services", endpoints.GetGlobalEmotes)
+
+	// Channel Emotes
+	v1Channel.Get("/id", endpoints.GetChannelId)
+
 }

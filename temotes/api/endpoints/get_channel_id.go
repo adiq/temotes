@@ -8,13 +8,14 @@ import (
 
 func GetChannelId(c *fiber.Ctx) error {
 	channel := strings.ToLower(c.Params("channel"))
-	channelId, err := providers.TwitchFetcher{}.FetchUserId(channel)
+	twitchUser, err := providers.TwitchFetcher{}.FetchUserIdentifiers(channel)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "User not found")
 	}
 
 	return c.JSON(fiber.Map{
-		"login": channel,
-		"id":    channelId,
+		"id":           twitchUser.ID,
+		"login":        twitchUser.Login,
+		"display_name": twitchUser.DisplayName,
 	})
 }

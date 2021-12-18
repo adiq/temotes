@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"temotes/temotes"
+	"time"
 )
 
 type TwitchFetcher struct{}
@@ -36,9 +37,9 @@ func getAuthorizedRequest(url string) *http.Request {
 	return req
 }
 
-func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
+func (t TwitchFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
 	request := getAuthorizedRequest(url)
-	response := temotes.FetchDataRequest(request)
+	response := temotes.CachedFetcher{}.FetchDataRequest(request, ttl, cacheKey)
 	var twitchEmotes twitchEmoteResponse
 	jsonErr := json.Unmarshal(response, &twitchEmotes)
 	if jsonErr != nil {
@@ -54,11 +55,11 @@ func (t TwitchFetcher) fetchEmotes(url string) []temotes.Emote {
 }
 
 func (t TwitchFetcher) FetchGlobalEmotes() []temotes.Emote {
-	return t.fetchEmotes("https://api.twitch.tv/helix/chat/emotes/global")
+	return t.fetchEmotes("https://api.twitch.tv/helix/chat/emotes/global", temotes.GlobalEmotesTtl, "twitch-global-emotes")
 }
 
 func (t TwitchFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	return t.fetchEmotes(fmt.Sprintf("https://api.twitch.tv/helix/chat/emotes?broadcaster_id=%d", id))
+	return t.fetchEmotes(fmt.Sprintf("https://api.twitch.tv/helix/chat/emotes?broadcaster_id=%d", id), temotes.ChannelEmotesTtl, fmt.Sprintf("twitch-channel-emotes-%d", id))
 }
 
 func (t TwitchFetcher) parseEmoteUrls(emote twitchEmote) []temotes.EmoteUrl {
@@ -118,7 +119,7 @@ type twitchUser struct {
 
 func (t TwitchFetcher) FetchUserId(username string) (temotes.TwitchUserId, error) {
 	request := getAuthorizedRequest(fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username))
-	response := temotes.FetchDataRequest(request)
+	response := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, fmt.Sprintf("twitch-user-id-%s", username))
 	var twitchUsers twitchUsersResponse
 	jsonErr := json.Unmarshal(response, &twitchUsers)
 	if jsonErr != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"temotes/temotes"
+	"time"
 )
 
 type SevenTvFetcher struct{}
@@ -17,8 +18,8 @@ type sevenTvEmote struct {
 
 type sevenTvEmoteUrl = [2]string
 
-func (t SevenTvFetcher) fetchEmotes(url string) []temotes.Emote {
-	response := temotes.FetchData(url)
+func (t SevenTvFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
+	response := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
 	var sevenTvEmotes []sevenTvEmote
 	jsonErr := json.Unmarshal(response, &sevenTvEmotes)
 	if jsonErr != nil {
@@ -34,11 +35,11 @@ func (t SevenTvFetcher) fetchEmotes(url string) []temotes.Emote {
 }
 
 func (t SevenTvFetcher) FetchGlobalEmotes() []temotes.Emote {
-	return t.fetchEmotes("https://api.7tv.app/v2/emotes/global")
+	return t.fetchEmotes("https://api.7tv.app/v2/emotes/global", temotes.GlobalEmotesTtl, "7tv-global-emotes")
 }
 
 func (t SevenTvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	return t.fetchEmotes(fmt.Sprintf("https://api.7tv.app/v2/users/%d/emotes", id))
+	return t.fetchEmotes(fmt.Sprintf("https://api.7tv.app/v2/users/%d/emotes", id), temotes.ChannelEmotesTtl, fmt.Sprintf("7tv-channel-emotes-%d", id))
 }
 
 func (t SevenTvFetcher) parseEmoteUrls(emote sevenTvEmote) []temotes.EmoteUrl {

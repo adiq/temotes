@@ -6,6 +6,7 @@ import (
 	"log"
 	"sort"
 	"temotes/temotes"
+	"time"
 )
 
 type FfzFetcher struct{}
@@ -24,8 +25,8 @@ type ffzResponse struct {
 	Sets map[string]ffzSetsResponse `json:"sets"`
 }
 
-func (t FfzFetcher) fetchEmotes(url string) []temotes.Emote {
-	response := temotes.FetchData(url)
+func (t FfzFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
+	response := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
 	var ffzEmotesResponse ffzResponse
 	jsonErr := json.Unmarshal(response, &ffzEmotesResponse)
 	if jsonErr != nil {
@@ -43,11 +44,11 @@ func (t FfzFetcher) fetchEmotes(url string) []temotes.Emote {
 }
 
 func (t FfzFetcher) FetchGlobalEmotes() []temotes.Emote {
-	return t.fetchEmotes("https://api.frankerfacez.com/v1/set/global")
+	return t.fetchEmotes("https://api.frankerfacez.com/v1/set/global", temotes.GlobalEmotesTtl, "ffz-global-emotes")
 }
 
 func (t FfzFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	return t.fetchEmotes(fmt.Sprintf("https://api.frankerfacez.com/v1/room/id/%d", id))
+	return t.fetchEmotes(fmt.Sprintf("https://api.frankerfacez.com/v1/room/id/%d", id), temotes.ChannelEmotesTtl, fmt.Sprintf("ffz-channel-emotes-%d", id))
 }
 
 func (t FfzFetcher) parseEmoteUrls(emote ffzEmote) []temotes.EmoteUrl {

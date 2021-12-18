@@ -7,16 +7,22 @@ import (
 	"time"
 )
 
-func FetchData(url string) []byte {
+type Fetcher struct{}
+
+func (f Fetcher) GetRequest(url string) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return FetchDataRequest(req)
+	return req
 }
 
-func FetchDataRequest(req *http.Request) []byte {
+func (f Fetcher) FetchData(url string) []byte {
+	return f.FetchDataRequest(f.GetRequest(url))
+}
+
+func (f Fetcher) FetchDataRequest(req *http.Request) []byte {
 	client := http.Client{
 		Timeout: time.Second * 2,
 	}

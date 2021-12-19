@@ -14,6 +14,7 @@ func SetupServer() *fiber.App {
 	app.Use(cors.New())
 	app.Use(recover.New())
 
+	rateLimiter(app)
 	setupRoutes(app)
 
 	app.Use(notFoundHandler)

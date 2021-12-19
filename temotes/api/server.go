@@ -16,6 +16,7 @@ func SetupServer() *fiber.App {
 
 	rateLimiter(app)
 	setupRoutes(app)
+	setupDashboard(app)
 
 	app.Use(notFoundHandler)
 

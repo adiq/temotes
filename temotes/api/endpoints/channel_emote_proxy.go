@@ -57,11 +57,16 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 		}
 
 		if url != "" {
-			return c.Redirect(url, fiber.StatusTemporaryRedirect)
+			return redirectWithCache(c, url)
 		}
 	}
 
 	return fiber.NewError(fiber.StatusNotFound, "emote not found")
+}
+
+func redirectWithCache(c *fiber.Ctx, url string) error {
+	c.Set("Cache-Control", "public, max-age=604800")
+	return c.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 
 func getEmoteWithCode(emotes []temotes.Emote, code string) (temotes.Emote, error) {

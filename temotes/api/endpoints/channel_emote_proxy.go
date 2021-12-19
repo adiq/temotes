@@ -3,6 +3,7 @@ package endpoints
 import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
+	"log"
 	"temotes/temotes"
 )
 
@@ -13,7 +14,8 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 	}
 
 	rawSize := c.Query("size")
-	var size temotes.EmoteSize
+	sizeNone := temotes.EmoteSize("none")
+	size := sizeNone
 	if rawSize != "" {
 		for _, emSize := range []temotes.EmoteSize{temotes.Size4x, temotes.Size3x, temotes.Size2x, temotes.Size1x} {
 			if emSize == temotes.EmoteSize(rawSize) {
@@ -21,7 +23,7 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 			}
 		}
 
-		if &size == nil {
+		if size == sizeNone {
 			return fiber.NewError(fiber.StatusBadRequest, "invalid size")
 		}
 	}
@@ -44,7 +46,7 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 		}
 
 		var url string
-		if &size != nil {
+		if size != sizeNone {
 			url, err = getEmoteUrlForSize(emote, size)
 			if err != nil {
 				continue
@@ -91,7 +93,9 @@ func getEmoteUrlForSize(emote temotes.Emote, size temotes.EmoteSize) (string, er
 
 func getHighestAvailableEmoteSizeUrl(emote temotes.Emote) (string, error) {
 	for _, size := range []temotes.EmoteSize{temotes.Size4x, temotes.Size3x, temotes.Size2x, temotes.Size1x} {
+		log.Println("checking for size", size)
 		url, err := getEmoteUrlForSize(emote, size)
+		log.Println(emote, err)
 		if err == nil {
 			return url, nil
 		}

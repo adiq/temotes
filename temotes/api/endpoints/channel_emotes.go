@@ -16,7 +16,7 @@ func GetChannelEmotes(c *fiber.Ctx) error {
 		return err
 	}
 
-	var emotes []temotes.Emote
+	emotes := make([]temotes.Emote, 0)
 	for _, fetcher := range *fetchers {
 		emotes = append(emotes, fetcher.FetchChannelEmotes(channelId)...)
 	}

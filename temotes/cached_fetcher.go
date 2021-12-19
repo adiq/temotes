@@ -3,21 +3,33 @@ package temotes
 import (
 	"context"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
-const (
-	GlobalEmotesTtl  = time.Minute * 15
-	ChannelEmotesTtl = time.Minute * 5
-	TwitchIdTtl      = time.Hour * 24 * 7
+var (
+	fetcher          *Fetcher
+	GlobalEmotesTtl  time.Duration
+	ChannelEmotesTtl time.Duration
+	TwitchIdTtl      time.Duration
 )
-
-var fetcher *Fetcher
 
 type CachedFetcher struct{}
 
+func (f CachedFetcher) initTtl() {
+	globalEmotesTtl, _ := strconv.ParseInt(os.Getenv("CACHE_TTL_GLOBAL_EMOTES"), 10, 64)
+	channelEmotesTtl, _ := strconv.ParseInt(os.Getenv("CACHE_TTL_CHANNEL_EMOTES"), 10, 64)
+	twitchIdTtl, _ := strconv.ParseInt(os.Getenv("CACHE_TTL_TWITCH_IDENTIFIERS"), 10, 64)
+
+	GlobalEmotesTtl = time.Duration(globalEmotesTtl) * time.Second
+	ChannelEmotesTtl = time.Duration(channelEmotesTtl) * time.Second
+	TwitchIdTtl = time.Duration(twitchIdTtl) * time.Second
+}
+
 func (f CachedFetcher) getFetcher() *Fetcher {
 	if fetcher == nil {
+		f.initTtl()
 		fetcher = &Fetcher{}
 	}
 

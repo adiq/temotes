@@ -7,7 +7,7 @@ type EmoteFetcher interface {
 	FetchChannelEmotes(id TwitchUserId) []Emote
 }
 
-type PersonalDataFetcher interface {
-	FetchPersonalAvatar(id TwitchUserId)
-	FetchPersonalEmotes(id TwitchUserId) []Emote
-}
+//type PersonalDataFetcher interface {
+//	FetchPersonalAvatar(id TwitchUserId)
+//	FetchPersonalEmotes(id TwitchUserId) []Emote
+//}

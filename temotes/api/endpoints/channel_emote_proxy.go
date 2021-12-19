@@ -2,8 +2,9 @@ package endpoints
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"log"
+	"os"
 	"temotes/temotes"
 )
 
@@ -67,7 +68,7 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 }
 
 func redirectWithCache(c *fiber.Ctx, url string) error {
-	c.Set("Cache-Control", "public, max-age=604800")
+	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%s", os.Getenv("PROXY_MAX_AGE")))
 	return c.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 
@@ -93,9 +94,7 @@ func getEmoteUrlForSize(emote temotes.Emote, size temotes.EmoteSize) (string, er
 
 func getHighestAvailableEmoteSizeUrl(emote temotes.Emote) (string, error) {
 	for _, size := range []temotes.EmoteSize{temotes.Size4x, temotes.Size3x, temotes.Size2x, temotes.Size1x} {
-		log.Println("checking for size", size)
 		url, err := getEmoteUrlForSize(emote, size)
-		log.Println(emote, err)
 		if err == nil {
 			return url, nil
 		}

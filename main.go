@@ -2,10 +2,11 @@ package main
 
 import (
 	"log"
+	"os"
 	"temotes/temotes/api"
 )
 
 func main() {
 	app := api.SetupServer()
-	log.Fatal(app.Listen("0.0.0.0:80"))
+	log.Fatal(app.Listen(os.Getenv("SERVER_ADDR")))
 }

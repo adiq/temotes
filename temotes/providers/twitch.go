@@ -118,12 +118,14 @@ type twitchUser struct {
 	ID          string `json:"id"`
 	Login       string `json:"login"`
 	DisplayName string `json:"display_name"`
+	Avatar      string `json:"profile_image_url"`
 }
 
 type TwitchUser struct {
-	ID          temotes.TwitchUserId
-	Login       string
-	DisplayName string
+	ID          temotes.TwitchUserId `json:"id"`
+	Login       string               `json:"login"`
+	DisplayName string               `json:"display_name"`
+	Avatar      string               `json:"avatar"`
 }
 
 func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, error) {
@@ -159,6 +161,7 @@ func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, err
 		ID:          temotes.TwitchUserId(userId),
 		Login:       twitchUsers.Data[0].Login,
 		DisplayName: twitchUsers.Data[0].DisplayName,
+		Avatar:      twitchUsers.Data[0].Avatar,
 	}
 
 	return user, nil

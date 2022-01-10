@@ -11,9 +11,5 @@ func GetChannelIdentifiers(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "User not found")
 	}
 
-	return c.JSON(fiber.Map{
-		"id":           twitchUser.ID,
-		"login":        twitchUser.Login,
-		"display_name": twitchUser.DisplayName,
-	})
+	return c.JSON(twitchUser)
 }

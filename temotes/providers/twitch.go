@@ -40,14 +40,18 @@ func getAuthorizedRequest(url string) *http.Request {
 
 func (t TwitchFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
 	request := getAuthorizedRequest(url)
-	response := temotes.CachedFetcher{}.FetchDataRequest(request, ttl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchDataRequest(request, ttl, cacheKey)
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
+
 	var twitchEmotes twitchEmoteResponse
 	jsonErr := json.Unmarshal(response, &twitchEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, twitchEmote := range twitchEmotes.Data {
 		emotes = append(emotes, t.parseEmote(twitchEmote))
 	}
@@ -141,7 +145,11 @@ func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, err
 		cacheKey = fmt.Sprintf("twitch-user-identifiers-id-%d", id)
 	}
 
-	response := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
 	var twitchUsers twitchUsersResponse
 	jsonErr := json.Unmarshal(response, &twitchUsers)
 	if jsonErr != nil {

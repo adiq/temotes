@@ -19,14 +19,18 @@ type sevenTvEmote struct {
 type sevenTvEmoteUrl = [2]string
 
 func (t SevenTvFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
-	response := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
+
 	var sevenTvEmotes []sevenTvEmote
 	jsonErr := json.Unmarshal(response, &sevenTvEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, sevenTvEmote := range sevenTvEmotes {
 		emotes = append(emotes, t.parseEmote(sevenTvEmote))
 	}

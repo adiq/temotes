@@ -26,14 +26,18 @@ type ffzResponse struct {
 }
 
 func (t FfzFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
-	response := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
+
 	var ffzEmotesResponse ffzResponse
 	jsonErr := json.Unmarshal(response, &ffzEmotesResponse)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, emoteSet := range ffzEmotesResponse.Sets {
 		for _, ffzEmote := range emoteSet.Emotes {
 			emotes = append(emotes, t.parseEmote(ffzEmote))

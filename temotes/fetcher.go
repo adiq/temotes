@@ -1,6 +1,7 @@
 package temotes
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,11 +19,11 @@ func (f Fetcher) GetRequest(url string) *http.Request {
 	return req
 }
 
-func (f Fetcher) FetchData(url string) []byte {
+func (f Fetcher) FetchData(url string) ([]byte, error) {
 	return f.FetchDataRequest(f.GetRequest(url))
 }
 
-func (f Fetcher) FetchDataRequest(req *http.Request) []byte {
+func (f Fetcher) FetchDataRequest(req *http.Request) ([]byte, error) {
 	client := http.Client{
 		Timeout: time.Second * 2,
 	}
@@ -32,14 +33,18 @@ func (f Fetcher) FetchDataRequest(req *http.Request) []byte {
 		log.Fatal(getErr)
 	}
 
+	if res.StatusCode != 200 {
+		return nil, errors.New("request returned non-successful response response")
+	}
+
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
 
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
-		log.Fatal(readErr)
+		return nil, readErr
 	}
 
-	return body
+	return body, nil
 }

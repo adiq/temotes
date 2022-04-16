@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -33,9 +34,63 @@ func getAuthorizedRequest(url string) *http.Request {
 	}
 
 	req.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("TWITCH_ACCESS_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", getAccessToken(false)))
 
 	return req
+}
+
+func fetchAccessToken() string {
+	req, err := http.NewRequest(http.MethodPost, "https://id.twitch.tv/oauth2/token", strings.NewReader(fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", os.Getenv("TWITCH_CLIENT_ID"), os.Getenv("TWITCH_CLIENT_SECRET"))))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(resp.Body)
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&token)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return token.AccessToken
+}
+
+func getAccessToken(force bool) string {
+	var accessToken string
+	cache := temotes.CacheService{}.GetCacheClient()
+
+	if force == true {
+		cache.Delete("twitch_access_token")
+	} else {
+		accessToken, accessTokenFound := cache.Get("twitch_access_token")
+
+		if accessTokenFound {
+			fmt.Println("Found cached access token")
+			return accessToken.(string)
+		}
+	}
+
+	accessToken = fetchAccessToken()
+	cache.Set("twitch_access_token", accessToken, time.Hour*24*7)
+
+	return accessToken
 }
 
 func (t TwitchFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {

@@ -82,7 +82,6 @@ func getAccessToken(force bool) string {
 		accessToken, accessTokenFound := cache.Get("twitch_access_token")
 
 		if accessTokenFound {
-			fmt.Println("Found cached access token")
 			return accessToken.(string)
 		}
 	}

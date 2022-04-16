@@ -7,6 +7,7 @@ import (
 	"strings"
 	"temotes/temotes"
 	"temotes/temotes/providers"
+	"time"
 )
 
 type Helpers struct{}
@@ -15,10 +16,20 @@ func (h Helpers) GetTwitchUserId(input string) (temotes.TwitchUserId, error) {
 	id, err := strconv.ParseInt(strings.ToLower(input), 10, 64)
 
 	if id == 0 || err != nil {
+		cache := temotes.CacheService{}.GetCacheClient()
+		cacheKey := fmt.Sprintf("twitch_channel_id_%s", strings.ToLower(input))
+		channelId, channelIdCached := cache.Get(cacheKey)
+
+		if channelIdCached {
+			return channelId.(temotes.TwitchUserId), nil
+		}
+
 		twitchUser, err := providers.TwitchFetcher{}.FetchUserIdentifiers(input)
 		if err != nil {
 			return 0, fiber.NewError(fiber.StatusNotFound, "User not found")
 		}
+
+		cache.Set(cacheKey, twitchUser.ID, time.Hour)
 
 		return twitchUser.ID, nil
 	}

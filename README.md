@@ -20,7 +20,7 @@ We support:
 
 * Golang
 * Redis
-* Twitch API Access (Client ID and Access Token)
+* Twitch API Access (Client ID and Client Secret)
 
 ### Configure
 

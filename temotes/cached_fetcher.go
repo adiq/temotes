@@ -43,7 +43,7 @@ func (f CachedFetcher) FetchData(url string, ttl time.Duration, cacheKey string)
 }
 
 func (f CachedFetcher) FetchDataRequest(req *http.Request, ttl time.Duration, cacheKey string) ([]byte, error) {
-	cache := CacheService{}.Connect()
+	cache := CacheService{}.GetRedisClient()
 	cacheData, err := cache.Get(context.Background(), cacheKey).Result()
 	if err == nil {
 		return []byte(cacheData), nil

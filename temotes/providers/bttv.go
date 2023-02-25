@@ -15,7 +15,11 @@ type bttvEmote struct {
 }
 
 func (t BttvFetcher) FetchGlobalEmotes() []temotes.Emote {
-	response := temotes.CachedFetcher{}.FetchData("https://api.betterttv.net/3/cached/emotes/global", temotes.GlobalEmotesTtl, "bttv-global-emotes")
+	response, err := temotes.CachedFetcher{}.FetchData("https://api.betterttv.net/3/cached/emotes/global", temotes.GlobalEmotesTtl, "bttv-global-emotes")
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
 
 	var bttvEmotes []bttvEmote
 	jsonErr := json.Unmarshal(response, &bttvEmotes)
@@ -23,7 +27,6 @@ func (t BttvFetcher) FetchGlobalEmotes() []temotes.Emote {
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, bttvEmote := range bttvEmotes {
 		emotes = append(emotes, t.parseEmote(bttvEmote))
 	}
@@ -37,7 +40,11 @@ type bttvChannelEmotesResponse struct {
 }
 
 func (t BttvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	response := temotes.CachedFetcher{}.FetchData(fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%d", id), temotes.ChannelEmotesTtl, fmt.Sprintf("bttv-channel-emotes-%d", id))
+	response, err := temotes.CachedFetcher{}.FetchData(fmt.Sprintf("https://api.betterttv.net/3/cached/users/twitch/%d", id), temotes.ChannelEmotesTtl, fmt.Sprintf("bttv-channel-emotes-%d", id))
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
 
 	var bttvEmotesResponse bttvChannelEmotesResponse
 	jsonErr := json.Unmarshal(response, &bttvEmotesResponse)
@@ -45,7 +52,6 @@ func (t BttvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, bttvEmote := range bttvEmotesResponse.ChannelEmotes {
 		emotes = append(emotes, t.parseEmote(bttvEmote))
 	}

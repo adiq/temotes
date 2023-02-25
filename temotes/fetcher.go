@@ -1,9 +1,12 @@
 package temotes
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -18,18 +21,28 @@ func (f Fetcher) GetRequest(url string) *http.Request {
 	return req
 }
 
-func (f Fetcher) FetchData(url string) []byte {
+func (f Fetcher) FetchData(url string) ([]byte, error) {
 	return f.FetchDataRequest(f.GetRequest(url))
 }
 
-func (f Fetcher) FetchDataRequest(req *http.Request) []byte {
+func (f Fetcher) FetchDataRequest(req *http.Request) ([]byte, error) {
+	timeout, timeoutErr := strconv.ParseInt(os.Getenv("FETCHER_TIMEOUT"), 10, 64)
+	if timeoutErr != nil {
+		log.Print("FETCHER_TIMEOUT not specified or defined incorrectly. Defaulting to 3 seconds.")
+		timeout = 3 // sane default
+	}
+
 	client := http.Client{
-		Timeout: time.Second * 2,
+		Timeout: time.Duration(timeout) * time.Second,
 	}
 
 	res, getErr := client.Do(req)
 	if getErr != nil {
 		log.Fatal(getErr)
+	}
+
+	if res.StatusCode != 200 {
+		return nil, errors.New("request returned non-successful response response")
 	}
 
 	if res.Body != nil {
@@ -38,8 +51,8 @@ func (f Fetcher) FetchDataRequest(req *http.Request) []byte {
 
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
-		log.Fatal(readErr)
+		return nil, readErr
 	}
 
-	return body
+	return body, nil
 }

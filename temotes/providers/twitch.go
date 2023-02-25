@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -33,21 +34,78 @@ func getAuthorizedRequest(url string) *http.Request {
 	}
 
 	req.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("TWITCH_ACCESS_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", getAccessToken(false)))
 
 	return req
 }
 
+func fetchAccessToken() string {
+	req, err := http.NewRequest(http.MethodPost, "https://id.twitch.tv/oauth2/token", strings.NewReader(fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", os.Getenv("TWITCH_CLIENT_ID"), os.Getenv("TWITCH_CLIENT_SECRET"))))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(resp.Body)
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&token)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return token.AccessToken
+}
+
+func getAccessToken(force bool) string {
+	var accessToken string
+	cache := temotes.CacheService{}.GetCacheClient()
+
+	if force == true {
+		cache.Delete("twitch_access_token")
+	} else {
+		accessToken, accessTokenFound := cache.Get("twitch_access_token")
+
+		if accessTokenFound {
+			return accessToken.(string)
+		}
+	}
+
+	accessToken = fetchAccessToken()
+	cache.Set("twitch_access_token", accessToken, time.Hour*24*7)
+
+	return accessToken
+}
+
 func (t TwitchFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
 	request := getAuthorizedRequest(url)
-	response := temotes.CachedFetcher{}.FetchDataRequest(request, ttl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchDataRequest(request, ttl, cacheKey)
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
+
 	var twitchEmotes twitchEmoteResponse
 	jsonErr := json.Unmarshal(response, &twitchEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	var emotes []temotes.Emote
 	for _, twitchEmote := range twitchEmotes.Data {
 		emotes = append(emotes, t.parseEmote(twitchEmote))
 	}
@@ -118,12 +176,14 @@ type twitchUser struct {
 	ID          string `json:"id"`
 	Login       string `json:"login"`
 	DisplayName string `json:"display_name"`
+	Avatar      string `json:"profile_image_url"`
 }
 
 type TwitchUser struct {
-	ID          temotes.TwitchUserId
-	Login       string
-	DisplayName string
+	ID          temotes.TwitchUserId `json:"id"`
+	Login       string               `json:"login"`
+	DisplayName string               `json:"display_name"`
+	Avatar      string               `json:"avatar"`
 }
 
 func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, error) {
@@ -139,7 +199,11 @@ func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, err
 		cacheKey = fmt.Sprintf("twitch-user-identifiers-id-%d", id)
 	}
 
-	response := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, cacheKey)
+	response, err := temotes.CachedFetcher{}.FetchDataRequest(request, temotes.TwitchIdTtl, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
 	var twitchUsers twitchUsersResponse
 	jsonErr := json.Unmarshal(response, &twitchUsers)
 	if jsonErr != nil {
@@ -159,6 +223,7 @@ func (t TwitchFetcher) FetchUserIdentifiers(identifier string) (*TwitchUser, err
 		ID:          temotes.TwitchUserId(userId),
 		Login:       twitchUsers.Data[0].Login,
 		DisplayName: twitchUsers.Data[0].DisplayName,
+		Avatar:      twitchUsers.Data[0].Avatar,
 	}
 
 	return user, nil

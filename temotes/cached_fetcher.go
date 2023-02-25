@@ -36,22 +36,25 @@ func (f CachedFetcher) getFetcher() *Fetcher {
 	return fetcher
 }
 
-func (f CachedFetcher) FetchData(url string, ttl time.Duration, cacheKey string) []byte {
+func (f CachedFetcher) FetchData(url string, ttl time.Duration, cacheKey string) ([]byte, error) {
 	req := f.getFetcher().GetRequest(url)
 
 	return f.FetchDataRequest(req, ttl, cacheKey)
 }
 
-func (f CachedFetcher) FetchDataRequest(req *http.Request, ttl time.Duration, cacheKey string) []byte {
-	cache := CacheService{}.Connect()
+func (f CachedFetcher) FetchDataRequest(req *http.Request, ttl time.Duration, cacheKey string) ([]byte, error) {
+	cache := CacheService{}.GetRedisClient()
 	cacheData, err := cache.Get(context.Background(), cacheKey).Result()
 	if err == nil {
-		return []byte(cacheData)
+		return []byte(cacheData), nil
 	}
 
-	body := f.getFetcher().FetchDataRequest(req)
+	body, err := f.getFetcher().FetchDataRequest(req)
+	if err != nil {
+		return nil, err
+	}
 
 	go cache.Set(context.Background(), cacheKey, string(body), ttl)
 
-	return body
+	return body, nil
 }

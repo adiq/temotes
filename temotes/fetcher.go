@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -24,8 +26,14 @@ func (f Fetcher) FetchData(url string) ([]byte, error) {
 }
 
 func (f Fetcher) FetchDataRequest(req *http.Request) ([]byte, error) {
+	timeout, timeoutErr := strconv.ParseInt(os.Getenv("FETCHER_TIMEOUT"), 10, 64)
+	if timeoutErr != nil {
+		log.Print("FETCHER_TIMEOUT not specified or defined incorrectly. Defaulting to 3 seconds.")
+		timeout = 3 // sane default
+	}
+
 	client := http.Client{
-		Timeout: time.Second * 2,
+		Timeout: time.Duration(timeout) * time.Second,
 	}
 
 	res, getErr := client.Do(req)

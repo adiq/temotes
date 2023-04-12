@@ -1,4 +1,4 @@
-#  ![](https://cdn.7tv.app/emote/60afbb7f566c3e1fc9af3a48/1x) tEmotes API
+#  ![](https://emotes.adamcy.pl/v1/channel/adiq/emotes/7tv/proxy?emote=Harambe&size=1x) tEmotes API
  
 Easy to use API for Twitch emotes
 

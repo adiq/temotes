@@ -81,7 +81,7 @@ func (t FfzFetcher) parseEmoteUrls(emote ffzEmote) []temotes.EmoteUrl {
 	for _, scale := range keys {
 		urls = append(urls, temotes.EmoteUrl{
 			Size: getEmoteSize(scale),
-			Url:  fmt.Sprintf("https:%s", emote.Urls[scale]),
+			Url:  emote.Urls[scale],
 		})
 	}
 

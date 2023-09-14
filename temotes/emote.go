@@ -24,7 +24,8 @@ type EmoteUrl struct {
 }
 
 type Emote struct {
-	Provider EmoteProvider `json:"provider"`
-	Code     string        `json:"code"`
-	Urls     []EmoteUrl    `json:"urls"`
+	ProviderEmoteID string        `json:"provider_emote_id"`
+	Provider        EmoteProvider `json:"provider"`
+	Code            string        `json:"code"`
+	Urls            []EmoteUrl    `json:"urls"`
 }

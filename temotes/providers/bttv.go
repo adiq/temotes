@@ -82,8 +82,9 @@ func (t BttvFetcher) parseEmoteUrls(emote bttvEmote) []temotes.EmoteUrl {
 
 func (t BttvFetcher) parseEmote(emote bttvEmote) temotes.Emote {
 	return temotes.Emote{
-		Provider: temotes.ProviderBttv,
-		Code:     emote.Code,
-		Urls:     t.parseEmoteUrls(emote),
+		ProviderEmoteID: emote.ID,
+		Provider:        temotes.ProviderBttv,
+		Code:            emote.Code,
+		Urls:            t.parseEmoteUrls(emote),
 	}
 }

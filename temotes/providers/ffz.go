@@ -7,6 +7,7 @@ import (
 	"sort"
 	"temotes/temotes"
 	"time"
+	"strconv"
 )
 
 type FfzFetcher struct{}
@@ -90,8 +91,9 @@ func (t FfzFetcher) parseEmoteUrls(emote ffzEmote) []temotes.EmoteUrl {
 
 func (t FfzFetcher) parseEmote(emote ffzEmote) temotes.Emote {
 	return temotes.Emote{
-		Provider: temotes.ProviderFfz,
-		Code:     emote.Code,
-		Urls:     t.parseEmoteUrls(emote),
+		ProviderEmoteID: strconv.Itoa(emote.ID),
+		Provider:        temotes.ProviderFfz,
+		Code:            emote.Code,
+		Urls:            t.parseEmoteUrls(emote),
 	}
 }

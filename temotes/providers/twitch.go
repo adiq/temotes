@@ -162,9 +162,10 @@ func (t TwitchFetcher) parseEmoteUrls(emote twitchEmote) []temotes.EmoteUrl {
 
 func (t TwitchFetcher) parseEmote(emote twitchEmote) temotes.Emote {
 	return temotes.Emote{
-		Provider: temotes.ProviderTwitch,
-		Code:     emote.Code,
-		Urls:     t.parseEmoteUrls(emote),
+		ProviderEmoteID: emote.ID,
+		Provider:        temotes.ProviderTwitch,
+		Code:            emote.Code,
+		Urls:            t.parseEmoteUrls(emote),
 	}
 }
 

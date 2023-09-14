@@ -76,8 +76,9 @@ func (t SevenTvFetcher) parseEmoteUrls(emote sevenTvEmote) []temotes.EmoteUrl {
 
 func (t SevenTvFetcher) parseEmote(emote sevenTvEmote) temotes.Emote {
 	return temotes.Emote{
-		Provider: temotes.Provider7tv,
-		Code:     emote.Code,
-		Urls:     t.parseEmoteUrls(emote),
+		ProviderEmoteID: emote.ID,
+		Provider:        temotes.Provider7tv,
+		Code:            emote.Code,
+		Urls:            t.parseEmoteUrls(emote),
 	}
 }

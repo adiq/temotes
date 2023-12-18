@@ -5,48 +5,118 @@ import (
 	"fmt"
 	"log"
 	"temotes/temotes"
-	"time"
 )
 
 type SevenTvFetcher struct{}
 
-type sevenTvEmote struct {
-	ID   string            `json:"id"`
-	Code string            `json:"name"`
-	Urls []sevenTvEmoteUrl `json:"urls"`
+type sevenTvGlobalEmoteResponse struct {
+	Data struct {
+		EmoteSet struct {
+			Emotes []sevenTvEmoteResponse `json:"emotes"`
+		} `json:"namedEmoteSet"`
+	} `json:"data"`
 }
 
-type sevenTvEmoteUrl = [2]string
+type sevenTvChannelEmoteResponse struct {
+	Data struct {
+		UserByConnection struct {
+			Id          string `json:"id"`
+			Connections []struct {
+				Platform   string `json:"platform"`
+				EmoteSetID string `json:"emote_set_id"`
+			} `json:"connections"`
+			EmoteSets []struct {
+				Id     string                 `json:"id"`
+				Emotes []sevenTvEmoteResponse `json:"emotes"`
+			} `json:"emote_sets"`
+		} `json:"userByConnection"`
+	} `json:"data"`
+}
 
-func (t SevenTvFetcher) fetchEmotes(url string, ttl time.Duration, cacheKey string) []temotes.Emote {
-	response, err := temotes.CachedFetcher{}.FetchData(url, ttl, cacheKey)
+type sevenTvEmoteResponse struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func (t SevenTvFetcher) FetchGlobalEmotes() []temotes.Emote {
+	query := `
+		query NamedEmoteSet {
+			namedEmoteSet(name: GLOBAL) {
+				emotes {
+					id
+					name
+				}
+			}
+		}
+	`
+
+	response, err := temotes.CachedFetcher{}.FetchGqlData("https://7tv.io/v3/gql", query, temotes.GlobalEmotesTtl, "7tv-global-emotes")
 	var emotes []temotes.Emote
 	if err != nil {
 		return emotes
 	}
 
-	var sevenTvEmotes []sevenTvEmote
+	var sevenTvEmotes sevenTvGlobalEmoteResponse
 	jsonErr := json.Unmarshal(response, &sevenTvEmotes)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	for _, sevenTvEmote := range sevenTvEmotes {
+	for _, sevenTvEmote := range sevenTvEmotes.Data.EmoteSet.Emotes {
 		emotes = append(emotes, t.parseEmote(sevenTvEmote))
 	}
 
 	return emotes
 }
 
-func (t SevenTvFetcher) FetchGlobalEmotes() []temotes.Emote {
-	return t.fetchEmotes("https://api.7tv.app/v2/emotes/global", temotes.GlobalEmotesTtl, "7tv-global-emotes")
-}
-
 func (t SevenTvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Emote {
-	return t.fetchEmotes(fmt.Sprintf("https://api.7tv.app/v2/users/%d/emotes", id), temotes.ChannelEmotesTtl, fmt.Sprintf("7tv-channel-emotes-%d", id))
+	query := fmt.Sprintf(`
+		query UserByConnection {
+		   userByConnection(platform: TWITCH, id: "%d") {
+			   id
+			   connections(type: TWITCH) {
+				   platform
+				   emote_set_id
+			   }
+			   emote_sets {
+				   id
+				   emotes {
+					   id
+					   name
+				   }
+			   }
+		   }
+		}
+	`, id)
+
+	response, err := temotes.CachedFetcher{}.FetchGqlData("https://7tv.io/v3/gql", query, temotes.ChannelEmotesTtl, fmt.Sprintf("7tv-channel-%d", id))
+	var emotes []temotes.Emote
+	if err != nil {
+		return emotes
+	}
+
+	var parsedResponse sevenTvChannelEmoteResponse
+	jsonErr := json.Unmarshal(response, &parsedResponse)
+	if jsonErr != nil {
+		log.Fatal(jsonErr)
+	}
+
+	activeEmoteSetId := parsedResponse.Data.UserByConnection.Connections[0].EmoteSetID
+
+	for _, emoteSet := range parsedResponse.Data.UserByConnection.EmoteSets {
+		if emoteSet.Id != activeEmoteSetId {
+			continue
+		}
+
+		for _, sevenTvEmote := range emoteSet.Emotes {
+			emotes = append(emotes, t.parseEmote(sevenTvEmote))
+		}
+	}
+
+	return emotes
 }
 
-func (t SevenTvFetcher) parseEmoteUrls(emote sevenTvEmote) []temotes.EmoteUrl {
+func (t SevenTvFetcher) parseEmoteUrls(emote sevenTvEmoteResponse) []temotes.EmoteUrl {
 	var urls []temotes.EmoteUrl
 
 	getEmoteSize := func(scale string) temotes.EmoteSize {
@@ -64,20 +134,21 @@ func (t SevenTvFetcher) parseEmoteUrls(emote sevenTvEmote) []temotes.EmoteUrl {
 		}
 	}
 
-	for _, url := range emote.Urls {
+	urlSizes := []string{"1", "2", "3", "4"}
+	for _, size := range urlSizes {
 		urls = append(urls, temotes.EmoteUrl{
-			Size: getEmoteSize(url[0]),
-			Url:  url[1],
+			Size: getEmoteSize(size),
+			Url:  fmt.Sprintf("https://cdn.7tv.app/emote/%s/%sx.webp", emote.Id, size),
 		})
 	}
 
 	return urls
 }
 
-func (t SevenTvFetcher) parseEmote(emote sevenTvEmote) temotes.Emote {
+func (t SevenTvFetcher) parseEmote(emote sevenTvEmoteResponse) temotes.Emote {
 	return temotes.Emote{
 		Provider: temotes.Provider7tv,
-		Code:     emote.Code,
+		Code:     emote.Name,
 		Urls:     t.parseEmoteUrls(emote),
 	}
 }

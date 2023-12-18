@@ -36,6 +36,12 @@ func (f CachedFetcher) getFetcher() *Fetcher {
 	return fetcher
 }
 
+func (f CachedFetcher) FetchGqlData(url string, query string, ttl time.Duration, cacheKey string) ([]byte, error) {
+	req := f.getFetcher().GetGqlRequest(url, query)
+
+	return f.FetchDataRequest(req, ttl, cacheKey)
+}
+
 func (f CachedFetcher) FetchData(url string, ttl time.Duration, cacheKey string) ([]byte, error) {
 	req := f.getFetcher().GetRequest(url)
 

@@ -74,7 +74,7 @@ func (t SevenTvFetcher) FetchChannelEmotes(id temotes.TwitchUserId) []temotes.Em
 		query UserByConnection {
 		   userByConnection(platform: TWITCH, id: "%d") {
 			   id
-			   connections(type: TWITCH) {
+			   connections {
 				   platform
 				   emote_set_id
 			   }

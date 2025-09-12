@@ -6,9 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -63,10 +61,10 @@ func (f Fetcher) FetchData(url string) ([]byte, error) {
 }
 
 func (f Fetcher) FetchDataRequest(req *http.Request) ([]byte, error) {
-	timeout, timeoutErr := strconv.ParseInt(os.Getenv("FETCHER_TIMEOUT"), 10, 64)
-	if timeoutErr != nil {
+	timeout := GetConfig().FetcherTimeout
+	if timeout <= 0 {
 		log.Print("FETCHER_TIMEOUT not specified or defined incorrectly. Defaulting to 3 seconds.")
-		timeout = 3 // sane default
+		timeout = 3
 	}
 
 	client := http.Client{

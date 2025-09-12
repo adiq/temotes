@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"temotes/temotes"
@@ -33,14 +32,14 @@ func getAuthorizedRequest(url string) *http.Request {
 		log.Fatal(err)
 	}
 
-	req.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
+	req.Header.Set("Client-Id", temotes.GetConfig().TwitchClientID)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", getAccessToken(false)))
 
 	return req
 }
 
 func fetchAccessToken() string {
-	req, err := http.NewRequest(http.MethodPost, "https://id.twitch.tv/oauth2/token", strings.NewReader(fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", os.Getenv("TWITCH_CLIENT_ID"), os.Getenv("TWITCH_CLIENT_SECRET"))))
+	req, err := http.NewRequest(http.MethodPost, "https://id.twitch.tv/oauth2/token", strings.NewReader(fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", temotes.GetConfig().TwitchClientID, temotes.GetConfig().TwitchClientSecret)))
 	if err != nil {
 		log.Fatal(err)
 	}

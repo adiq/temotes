@@ -2,11 +2,15 @@ package main
 
 import (
 	"log"
-	"os"
+	"temotes/temotes"
 	"temotes/temotes/api"
 )
 
 func main() {
+	cfg := temotes.Load()
+	temotes.SetConfig(cfg)
+
 	app := api.SetupServer()
-	log.Fatal(app.Listen(os.Getenv("SERVER_ADDR")))
+
+	log.Fatal(app.Listen(cfg.ServerAddr))
 }

@@ -26,6 +26,10 @@ We support:
 
 Configuration is as easy as defining the environment variables from the `.env` file.
 
+#### Docker Swarm Secrets
+
+For Docker Swarm environments, secrets are also supported. If an environment variable's name ends with `_FILE` (e.g., `REDIS_PASSWORD_FILE=/run/secrets/redis_password`), the application will read the content of the specified file and use it as the value for that variable.
+
 ### Run & Build
 
 Running and building the application is as simple as in any other Go project.

@@ -7,10 +7,6 @@ import (
 )
 
 func main() {
-	cfg := temotes.Load()
-	temotes.SetConfig(cfg)
-
 	app := api.SetupServer()
-
-	log.Fatal(app.Listen(cfg.ServerAddr))
+	log.Fatal(app.Listen(temotes.GetConfig().ServerAddr))
 }

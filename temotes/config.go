@@ -1,9 +1,11 @@
 package temotes
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func getEnvOrFile(key string) string {
@@ -49,8 +51,8 @@ type Config struct {
 	FetcherTimeout        int
 }
 
-func Load() *Config {
-	return &Config{
+func LoadConfig() {
+	cfg := &Config{
 		ServerAddr:            getEnvOrFile("SERVER_ADDR"),
 		TwitchClientID:        getEnvOrFile("TWITCH_CLIENT_ID"),
 		TwitchClientSecret:    getEnvOrFile("TWITCH_CLIENT_SECRET"),
@@ -67,6 +69,8 @@ func Load() *Config {
 		CacheTTLTwitchIDs:     getInt("CACHE_TTL_TWITCH_IDENTIFIERS", 604800),
 		FetcherTimeout:        getInt("FETCHER_TIMEOUT", 3),
 	}
+	SetConfig(cfg)
+	log.Print("Config has been loaded.")
 }
 
 var GlobalConfig *Config
@@ -75,6 +79,9 @@ func SetConfig(cfg *Config) {
 	GlobalConfig = cfg
 }
 
+var once sync.Once
+
 func GetConfig() *Config {
+	once.Do(LoadConfig)
 	return GlobalConfig
 }

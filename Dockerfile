@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN go build -o server main.go
 
-FROM alpine:latest
+FROM alpine:3.20
 WORKDIR /app
 COPY --from=builder /app/server .
 EXPOSE 5000

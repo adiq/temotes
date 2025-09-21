@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"os"
 	"temotes/temotes"
 )
 
@@ -68,7 +67,7 @@ func GetChannelEmoteProxy(c *fiber.Ctx) error {
 }
 
 func redirectWithCache(c *fiber.Ctx, url string) error {
-	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%s", os.Getenv("PROXY_MAX_AGE")))
+	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%d", temotes.GetConfig().ProxyMaxAge))
 	return c.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 

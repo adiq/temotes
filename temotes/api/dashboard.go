@@ -4,13 +4,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
-	"os"
+	"temotes/temotes"
 )
 
 func setupDashboard(app *fiber.App) {
 	app.Get("/dashboard", basicauth.New(basicauth.Config{
 		Users: map[string]string{
-			os.Getenv("DASHBOARD_LOGIN"): os.Getenv("DASHBOARD_PASSWORD"),
+			temotes.GetConfig().DashboardLogin: temotes.GetConfig().DashboardPassword,
 		},
 	}), monitor.New())
 }

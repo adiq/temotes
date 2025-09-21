@@ -3,8 +3,6 @@ package temotes
 import (
 	"github.com/go-redis/redis/v8"
 	"github.com/patrickmn/go-cache"
-	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -22,11 +20,11 @@ func (c CacheService) GetRedisClient() *redis.Client {
 		redisLock.Lock()
 		defer redisLock.Unlock()
 		if redisClient == nil {
-			redisDb, _ := strconv.ParseInt(os.Getenv("REDIS_DB"), 10, 64)
+			redisDb := int64(GetConfig().RedisDB)
 
 			redisClient = redis.NewClient(&redis.Options{
-				Addr:     os.Getenv("REDIS_ADDR"),
-				Password: os.Getenv("REDIS_PASSWORD"),
+				Addr:     GetConfig().RedisAddr,
+				Password: GetConfig().RedisPassword,
 				DB:       int(redisDb),
 			})
 		}

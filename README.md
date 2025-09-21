@@ -35,6 +35,13 @@ For Docker Swarm environments, secrets are also supported. If an environment var
 
 Running and building the application is as simple as in any other Go project.
 
+### Health Endpoints
+
+The API provides two health check endpoints for monitoring:
+
+- **Liveness Probe** – checks if the server is running (`/livez`)
+- **Readiness Probe** – checks if the application and its dependencies are ready to handle requests (`/readyz`)
+
 # License
 
 This project is licensed under the terms of the [AGPL-3.0 license](agpl-3.0.md).

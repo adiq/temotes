@@ -7,7 +7,7 @@ RUN go build -o server main.go
 
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates curl wget
 COPY --from=builder /app/server .
 RUN adduser -D app && chown app:app /app/server
 USER app
